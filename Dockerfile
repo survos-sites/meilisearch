@@ -7,6 +7,7 @@ FROM getmeili/meilisearch:v1.53.0
 ENV MEILI_DB_PATH=/meili_data \
     MEILI_DUMP_DIR=/meili_dumps \
     TMPDIR=/meili_tmp \
+    TINI_SUBREAPER=true \
     MEILI_HTTP_ADDR=0.0.0.0:7700 \
     MEILI_ENV=production \
     MEILI_NO_ANALYTICS=true \
@@ -21,7 +22,7 @@ ENV MEILI_DB_PATH=/meili_data \
     MEILI_EXPERIMENTAL_CONTAINS_FILTER=true \
     MEILI_EXPERIMENTAL_CHAT_COMPLETIONS=true \
     MEILI_EXPERIMENTAL_COMPOSITE_EMBEDDERS=true \
-    MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE=true
+    MEILI_UPGRADE_DB=true
 
 # State is supplied by persistent mounts, not image layers.
 VOLUME ["/meili_data", "/meili_dumps", "/meili_tmp"]
