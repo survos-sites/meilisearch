@@ -1,0 +1,16 @@
+name: meilisearch
+
+services:
+  meilisearch:
+    build: .
+    image: survos/meilisearch:local
+    container_name: survos_meilisearch
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?Run bin/run.sh to create the local secret}
+    ports:
+      - "7700:7700"
+    volumes:
+      - ${MEILI_STORAGE_ROOT:?Set MEILI_STORAGE_ROOT}/data:/meili_data
+      - ${MEILI_STORAGE_ROOT:?Set MEILI_STORAGE_ROOT}/dumps:/meili_dumps
+      - ${MEILI_STORAGE_ROOT:?Set MEILI_STORAGE_ROOT}/tmp:/meili_tmp

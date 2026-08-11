@@ -15,6 +15,15 @@ Existing API keys are derived from the master key. Preserve the master key
 during routine image upgrades; rotate it only as a coordinated credential
 migration across every client.
 
+Some experimental features (`chatCompletions`, `network`, `multimodal`,
+`compositeEmbedders`, `getTaskDocumentsRoute` as of v1.53.0) have no env var
+or CLI flag — they're runtime-only, toggled via `PATCH /experimental-features`
+and persisted in the data directory. Run `bin/enable-experimental-features.sh`
+(pointed at the target instance via `MEILI_SERVER`/`MEILI_MASTER_KEY`) after
+any fresh data directory init, locally or in production. Re-check this list
+against `meilisearch --help` on every version bump — features move between
+env-var-configurable and runtime-only across releases.
+
 ## Persistent state
 
 Mount persistent host or volume storage at:
@@ -56,6 +65,9 @@ workflow after the previous service has been stopped.
 5. Stop any legacy process that uses the production database.
 6. Push `main` to Dokku and monitor startup and upgrade tasks.
 7. Verify health, version, index/document counts, and representative searches.
+8. Run `MEILI_SERVER=https://ms.survos.com MEILI_MASTER_KEY='<secret>' bin/enable-experimental-features.sh`
+   — required after a version bump if the data directory was rebuilt, since
+   runtime-only experimental features don't survive an empty init.
 
 Meilisearch databases are version-specific. This image currently enables the
 experimental dumpless upgrade mechanism; preserve a rollback copy before a
@@ -63,14 +75,16 @@ production version migration.
 
 ## Local development
 
-This repository describes production. Local development can use any compatible
-Compose stack, for example:
+`bin/run.sh` builds this Dockerfile as `survos/meilisearch:local`, starts it
+via `docker-compose.yml` (bind-mounting `MEILI_STORAGE_ROOT` from `.env`
+instead of the production storage layout), waits for `/health`, and then runs
+`bin/enable-experimental-features.sh` against it. `.env` (gitignored) holds
+`MEILI_MASTER_KEY` and `MEILI_STORAGE_ROOT`; if `.env` doesn't exist, `run.sh`
+generates a random master key on first run. Local Symfony apps generally point
+at this local instance with the shared dev master key rather than a
+per-app-generated one — check other apps' `.env.local` before rotating it.
 
-```yaml
-services:
-  meilisearch:
-    image: getmeili/meilisearch:v1.53.0
-    ports: ["7700:7700"]
-    environment:
-      MEILI_MASTER_KEY: local-development-only
-    volumes: ["./var/meili:/meili_data"]
+```bash
+cd ~/sites/meilisearch
+bin/run.sh
+```

@@ -16,13 +16,15 @@ ENV MEILI_DB_PATH=/meili_data \
     MEILI_HTTP_PAYLOAD_SIZE_LIMIT=1GiB \
     MEILI_MAX_CONCURRENT_TASKS=4 \
     MEILI_MAX_TASKS_PER_BATCH=100 \
-    MEILI_EXPERIMENTAL_NETWORK=true \
-    MEILI_EXPERIMENTAL_GET_TASK_DOCUMENTS_ROUTE=true \
-    MEILI_EXPERIMENTAL_MULTIMODAL=true \
     MEILI_EXPERIMENTAL_CONTAINS_FILTER=true \
-    MEILI_EXPERIMENTAL_CHAT_COMPLETIONS=true \
-    MEILI_EXPERIMENTAL_COMPOSITE_EMBEDDERS=true \
     MEILI_UPGRADE_DB=true
+
+# As of v1.53.0, chatCompletions/network/multimodal/compositeEmbedders/
+# getTaskDocumentsRoute have no env var or CLI flag anymore -- they're
+# runtime-only, toggled via PATCH /experimental-features and persisted in the
+# data directory (unlike MEILI_EXPERIMENTAL_CONTAINS_FILTER above, which is
+# still a real env var). Run bin/enable-experimental-features.sh against a
+# running instance after any fresh data directory init.
 
 # State is supplied by persistent mounts, not image layers.
 VOLUME ["/meili_data", "/meili_dumps", "/meili_tmp"]
