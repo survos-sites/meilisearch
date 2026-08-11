@@ -1,0 +1,20 @@
+{
+  "name": "meilisearch",
+  "description": "Production Meilisearch engine serving ms.survos.com",
+  "keywords": ["meilisearch", "search"],
+  "website": "https://ms.survos.com",
+  "healthchecks": {
+    "web": [
+      {
+        "type": "startup",
+        "name": "Meilisearch health",
+        "path": "/health",
+        "port": 7700,
+        "initialDelay": 10,
+        "attempts": 12,
+        "wait": 5,
+        "timeout": 5
+      }
+    ]
+  }
+}
