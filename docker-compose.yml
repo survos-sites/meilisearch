@@ -8,6 +8,19 @@ services:
     restart: unless-stopped
     environment:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?Run bin/run.sh to create the local secret}
+      # Bound the indexing budget, because Meilisearch cannot see that it is sharing.
+      #
+      # Left unset, it sizes its indexing memory from the RAM it believes it has — which inside
+      # podman is the whole 8 GiB VM, the same VM running Postgres, Redis, RabbitMQ and everything
+      # else. With MEILI_MAX_CONCURRENT_TASKS=4 that over-commits by design, and the kernel
+      # resolves it: pooling a chunked newspaper into a combined index (115,644 small documents,
+      # ~0.1 GB of JSON — not a large push) got the container OOM-killed after 1,309 documents,
+      # taking the whole instance and its other 22 indexes offline until the restart policy
+      # noticed. The payload was never the problem; the budget was.
+      #
+      # Host-specific, so it belongs here rather than in the image.
+      MEILI_MAX_INDEXING_MEMORY: ${MEILI_MAX_INDEXING_MEMORY:-2GiB}
+      MEILI_MAX_INDEXING_THREADS: ${MEILI_MAX_INDEXING_THREADS:-2}
     ports:
       - "7700:7700"
     volumes:
