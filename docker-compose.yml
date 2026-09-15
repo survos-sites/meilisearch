@@ -6,6 +6,13 @@ services:
     image: survos/meilisearch:local
     container_name: survos_meilisearch
     restart: unless-stopped
+    # Bounded at the container as well as inside the process, matching how elasticsearch is
+    # configured in ~/sites/docker (mem_limit: 2g alongside -Xmx1g). MEILI_MAX_INDEXING_MEMORY
+    # below is Meilisearch's own budget for one indexing task; this is the ceiling the kernel
+    # enforces on everything the process does, which is the part that was missing when it got
+    # OOM-killed. Two limits, because the process's opinion of its budget and the machine's
+    # opinion of it are different things and only one of them is binding.
+    mem_limit: ${MEILI_MEM_LIMIT:-3g}
     environment:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?Run bin/run.sh to create the local secret}
       # Bound the indexing budget, because Meilisearch cannot see that it is sharing.
