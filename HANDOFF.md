@@ -10,13 +10,40 @@
   - `/mnt/volume-1/meili-tmp` -> `/meili_tmp`
 - The former systemd service and `/usr/bin/meilisearch` were removed. The
   persistent production data was retained and must not be deleted.
-- Dokku deployment checks are disabled for `web` because two Meilisearch
-  processes cannot safely open the same database during a zero-downtime deploy.
+- Dokku deployment checks **must stay disabled** for `web`, because two
+  Meilisearch processes cannot open the same LMDB database at once. A
+  zero-downtime deploy starts the new container while the old one still holds
+  the lock, so the new process cannot open `/meili_data` and dies with
+  `Internal error: Resource temporarily unavailable (os error 11)`, retrying on
+  a widening backoff until the check gives up and the release is rejected. The
+  error names a resource problem and reads like one; it is a lock.
+
+      dokku checks:disable meilisearch web
+
+  This is not optional configuration and it is not belt-and-braces: with checks
+  enabled, **every** push fails, and the failure looks like the new version is
+  broken. It was lost once already — `checks:report` read
+  `Checks disabled list: none` on 2026-09-15 and a push was rejected — and an
+  `app.json` `healthchecks` block had been added, which reintroduces the same
+  check by the newer mechanism even when the legacy one is disabled. That block
+  has been removed; do not add one. A startup healthcheck cannot succeed for
+  this app by construction.
 - The production master key changed during migration. Existing key records are
   still present, but clients holding values derived from the former master key
   must be updated. This API-key rotation remains the main production follow-up.
 - Keep `MEILI_MASTER_KEY` in Dokku config only. Do not commit it.
 - The owner will perform and report future Dokku pushes.
+
+Deploying a new version:
+
+```bash
+# once, if `dokku checks:report meilisearch` shows nothing in the disabled list
+ssh fsn1 checks:disable meilisearch web
+
+git push dokku main
+ssh fsn1 ps:report meilisearch
+curl https://ms.survos.com/health
+```
 
 Useful production checks:
 

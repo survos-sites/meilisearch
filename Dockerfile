@@ -1,6 +1,6 @@
 # Public, reproducible production image for https://ms.survos.com.
 # The FROM tag is the version pin: bump it, validate, commit, and deploy.
-FROM getmeili/meilisearch:v1.53.0
+FROM getmeili/meilisearch:v1.53.2
 
 # Non-secret production configuration belongs in this public image. The only
 # required runtime secret is MEILI_MASTER_KEY, stored in Dokku config.
